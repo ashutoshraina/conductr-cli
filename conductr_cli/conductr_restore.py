@@ -8,9 +8,7 @@ import io
 
 import logging
 
-import requests_toolbelt
-
-from conductr_cli import control_protocol, bundle_utils, validation
+from conductr_cli import control_protocol, bundle_utils, validation, conduct_load
 from conductr_cli.bundle_core_info import BundleCoreInfo
 
 
@@ -22,12 +20,17 @@ def restore(args):
     restore_directory = unpack_backup(args.backup)
     bundles_json = Path(os.path.join(restore_directory, 'bundles.json')).read_text()
     bundles_info = BundleCoreInfo.from_bundles(json.loads(bundles_json))
+    load_errors = []
     for bundle_info in bundles_info:
         # noinspection PyBroadException
         try:
-            process_bundle(args, restore_directory, bundle_info)
+            bundle_id = process_bundle(args, restore_directory, bundle_info)
+            log.info('Restored {} with bundleId : {} \n'.format(bundle_info.bundle_name, bundle_id))
         except:
-            log.error('{} could not be restore.'.format(bundle_info.bundle_name))
+            load_errors.append('{} could not be restored.'.format(bundle_info.bundle_name))
+
+    for error in load_errors:
+        log.error(error)
 
 
 def unpack_backup(backup):
@@ -37,6 +40,9 @@ def unpack_backup(backup):
 
 
 def process_bundle(args, restore_directory, bundle_info: BundleCoreInfo):
+    log = logging.getLogger(__name__)
+    log.info('Restoring bundle {}'.format(bundle_info.bundle_name))
+
     files = []
 
     bundle = '{}.zip'.format(bundle_info.bundle_name_with_digest)
@@ -61,6 +67,7 @@ def process_bundle(args, restore_directory, bundle_info: BundleCoreInfo):
     else:
         files.append(('bundle', (bundle, bundle_archive)))
 
-    encoder = requests_toolbelt.MultipartEncoder(files)
-    response = control_protocol.load_bundle(args, encoder)
-    print(response)
+    multipart = conduct_load.create_multipart(log, files)
+    response = control_protocol.load_bundle(args, multipart)
+
+    return response['bundleId'] if args.long_ids else bundle_utils.short_id(response['bundleId'])
