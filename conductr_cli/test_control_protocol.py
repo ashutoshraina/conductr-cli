@@ -4,7 +4,7 @@ from requests import HTTPError
 
 from conductr_cli import logging_setup
 from conductr_cli.control_protocol import load_bundle, stop_bundle, get_members, get_agents, \
-    get_scale, run_bundle
+    run_bundle, get_bundles
 from conductr_cli.test.cli_test_case import CliTestCase
 
 
@@ -282,7 +282,7 @@ class TestControlProtocol(CliTestCase):
                                                 verify=self.server_verification_file
                                                 )
 
-    def test_scale_success(self):
+    def test_bundles_success(self):
         stdout = MagicMock()
         stderr = MagicMock()
         logging_setup.configure_logging(MagicMock(), stdout, stderr)
@@ -292,14 +292,14 @@ class TestControlProtocol(CliTestCase):
         run_bundle_mock = self.respond_with(status_code=200, text='{}')
 
         with patch('conductr_cli.conduct_request.get', run_bundle_mock):
-            get_scale(args_mock)
+            get_bundles(args_mock)
 
         run_bundle_mock.assert_called_once_with(False, '127.0.0.1', agent_url,
                                                 auth=self.conductr_auth,
                                                 verify=self.server_verification_file
                                                 )
 
-    def test_scale_failure(self):
+    def test_bundles_failure(self):
         stdout = MagicMock()
         stderr = MagicMock()
         logging_setup.configure_logging(MagicMock(), stdout, stderr)
@@ -309,7 +309,7 @@ class TestControlProtocol(CliTestCase):
         run_bundle_mock = self.respond_with(status_code=500, text='{}')
 
         with patch('conductr_cli.conduct_request.get', run_bundle_mock):
-            self.assertRaises(HTTPError, get_scale, args_mock)
+            self.assertRaises(HTTPError, get_bundles, args_mock)
 
         run_bundle_mock.assert_called_once_with(False, '127.0.0.1', agent_url,
                                                 auth=self.conductr_auth,

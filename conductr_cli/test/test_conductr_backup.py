@@ -1,3 +1,4 @@
+import json
 import os
 from unittest import mock
 from unittest.mock import patch, MagicMock, ANY
@@ -450,11 +451,7 @@ class TestBackup(CliTestCase):
         with patch('builtins.open', open_mock):
             backup(mock_args)
 
-        bundle_info = BundleCoreInfo(bundle_id=bundle_id,
-                                     bundle_name='reactive-maps-backend-region',
-                                     bundle_digest='6273d7a5b059d0e978c6d69ee1a5d7b4f0185008d7e57614a4a20c253a18fe28',
-                                     configuration_digest='d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792')
-
+        bundle_info = BundleCoreInfo.from_bundles(json.loads(self.bundle_json))[0]
         backup_bundle_json_mock.assert_called_once_with(temp_file, ANY)
         backup_bundle_mock.assert_called_once_with(mock_args, temp_file, bundle_info)
         members_mock.assert_called_once_with(mock_args, temp_file)
@@ -509,46 +506,8 @@ class TestBackup(CliTestCase):
         with patch('builtins.open', open_mock):
             backup(mock_args)
 
-        reactive_maps_backend_region = BundleCoreInfo(
-            bundle_id='6273d7a5b059d0e978c6d69ee1a5d7b4-d54620c7bc91897bbb2f25faaac25f46',
-            bundle_name='reactive-maps-backend-region',
-            bundle_digest='6273d7a5b059d0e978c6d69ee1a5d7b4f0185008d7e57614a4a20c253a18fe28',
-            configuration_digest='d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792')
-        continuous_delivery = BundleCoreInfo(
-            bundle_id='870ee7d6a4f5853229275cca14b604b8-d54620c7bc91897bbb2f25faaac25f46',
-            bundle_name='continuous-delivery',
-            bundle_digest='870ee7d6a4f5853229275cca14b604b8aca62a5e74819c0a092858cc75b6c186',
-            configuration_digest='d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792')
-        eslite = BundleCoreInfo(
-            bundle_id='57e432d0c647be2bbc83fa8e59ee469b-d54620c7bc91897bbb2f25faaac25f46',
-            bundle_name='eslite',
-            bundle_digest='57e432d0c647be2bbc83fa8e59ee469bb59d1f72df31f3d82cab0ad396130fe7',
-            configuration_digest='d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792')
-        reactive_maps_backend_summary = BundleCoreInfo(
-            bundle_id='abf60451c6af18adcc851d67b369b7f5-d54620c7bc91897bbb2f25faaac25f46',
-            bundle_name='reactive-maps-backend-summary',
-            bundle_digest='abf60451c6af18adcc851d67b369b7f54810d12f3a0ef80a89bdc2d9dff49a10',
-            configuration_digest='d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792')
-        reactive_maps_frontend = BundleCoreInfo(
-            bundle_id='69aa58f00909e36a3cb4229414698b64-d54620c7bc91897bbb2f25faaac25f46',
-            bundle_name='reactive-maps-frontend',
-            bundle_digest='69aa58f00909e36a3cb4229414698b6436295de8368898b5620b24f52c40c5c3',
-            configuration_digest='d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792')
-        visualiser = BundleCoreInfo(
-            bundle_id='cabaae7cf37b1cf99b3861515cd5e77a-d54620c7bc91897bbb2f25faaac25f46',
-            bundle_name='visualizer',
-            bundle_digest='cabaae7cf37b1cf99b3861515cd5e77a16fa9638e225fa234929cc1d46dde937',
-            configuration_digest='d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792')
-        added = BundleCoreInfo(
-            bundle_id='abcd-efgh',
-            bundle_name='added_bundle',
-            bundle_digest='abcd',
-            configuration_digest='efgh')
-
-        initial = [reactive_maps_backend_region, continuous_delivery, eslite, reactive_maps_backend_summary,
-                   reactive_maps_frontend,
-                   visualiser]
-        final = [added, continuous_delivery, eslite, reactive_maps_backend_summary, reactive_maps_frontend, visualiser]
+        initial = BundleCoreInfo.from_bundles(json.loads(self.bundle_json))
+        final = BundleCoreInfo.from_bundles(json.loads(modified_bundles))
 
         backup_bundle_json_mock.assert_called_once_with(temp_file, modified_bundles)
         process_removed_bundles_mock.assert_called_once_with(temp_file, initial, final)

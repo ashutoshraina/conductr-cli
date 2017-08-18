@@ -3,7 +3,8 @@ import argparse
 from conductr_cli import \
     bndl_main, conduct_agents, conduct_deploy, conduct_info, conduct_load, conduct_members, conduct_run, \
     conduct_service_names, conduct_stop, conduct_unload, version, conduct_logs, conduct_events, conduct_acls, \
-    conduct_dcos, conduct_load_license, host, logging_setup, conduct_url, custom_settings, conductr_backup
+    conduct_dcos, conduct_load_license, host, logging_setup, conduct_url, custom_settings, conductr_backup, \
+    conductr_restore
 from conductr_cli.constants import \
     DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, \
     DEFAULT_API_VERSION, DEFAULT_DCOS_SERVICE, DEFAULT_CLI_SETTINGS_DIR, \
@@ -494,6 +495,20 @@ def build_parser(dcos_mode):
 
     add_default_arguments(backup_parser, dcos_mode)
     backup_parser.set_defaults(func=conductr_backup.backup)
+
+    restore_parser = subparsers.add_parser('restore',
+                                           help='Restore a cluster from backup.',
+                                           formatter_class=argparse.RawTextHelpFormatter)
+
+    restore_parser.add_argument('backup',
+                                default=None if sys.stdin.isatty() else '-',
+                                nargs=None if sys.stdin.isatty() else '?',
+                                action='store',
+                                help='The path to the backup.'
+                                     'Specify "-" when using stdin')
+
+    add_default_arguments(restore_parser, dcos_mode)
+    restore_parser.set_defaults(func=conductr_restore.restore)
     return parser
 
 
